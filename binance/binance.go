@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 const BASE_ENDPOINT = "https://api.binance.com/api/v3"
@@ -20,18 +19,6 @@ type ServiceOpts func(*service)
 
 var _ BinanceApiService = (*service)(nil)
 
-func buildQuery(items []string) string {
-	query := strings.Builder{}
-	query.WriteString("[")
-
-	for _, item := range items {
-		query.WriteString(item)
-	}
-
-	query.WriteString("]")
-	return query.String()
-}
-
 func (s *service) Time(ctx context.Context) (*binance.TimeResponse, error) {
 	return call[binance.TimeResponse](ctx, http.MethodGet, "/time", s)
 }
@@ -39,21 +26,19 @@ func (s *service) Time(ctx context.Context) (*binance.TimeResponse, error) {
 func (s *service) ExchangeInfo(ctx context.Context, req *binance.ExchangeInfoRequest) (*binance.ExchangeInfoResponse, error) {
 	opts := []httpclient.RequestOption{}
 
-	for _, permission := range req.Permissions {
-		opts = append(opts, httpclient.WithQueryParam("permissions", permission))
+	if len(req.Permissions) == 1 {
+		opts = append(opts, httpclient.WithQueryParam("permissions", req.Permissions[0]))
+	} else {
+		opts = append(opts, httpclient.WithQueryListParam("permissions", req.Permissions))
 	}
 
 	queryName := "symbol"
-	if len(req.Symbols) == 0 {
+	if len(req.Symbols) == 1 {
 		opts = append(opts, httpclient.WithQueryParam(queryName, req.Symbols[0]))
 		return call[binance.ExchangeInfoResponse](ctx, http.MethodGet, "/exchangeInfo", s, opts...)
 	}
 
-	queryName = "symbols"
-	for _, symbol := range req.Symbols {
-		opts = append(opts, httpclient.WithQueryParam(queryName, symbol))
-	}
-
+	opts = append(opts, httpclient.WithQueryListParam("symbols", req.Symbols))
 	res, err := call[binance.ExchangeInfoResponse](ctx, http.MethodGet, "/exchangeInfo", s, opts...)
 	if err != nil {
 		return nil, err
@@ -74,7 +59,7 @@ func call[T any](ctx context.Context, method, endpoint string, s *service, opts 
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("Body: ", string(res.Body()))
 	if res.Body() != nil {
 		err = json.Unmarshal(res.Body(), &entity)
 		if err != nil {

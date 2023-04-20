@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 )
 
 type request struct {
@@ -45,6 +46,30 @@ func WithQueryParam(key, value string) RequestOption {
 		query := r.url.Query()
 		query.Add(key, value)
 		r.url.RawQuery = query.Encode()
+	}
+}
+
+func WithQueryListParam(key string, items []string) RequestOption {
+	return func(r *request) {
+		if len(items) != 0 {
+			query := strings.Builder{}
+			query.WriteString("[")
+
+			for i := 0; i < len(items)-1; i++ {
+				query.WriteString("\"")
+				query.WriteString(items[i])
+				query.WriteString("\"")
+				query.WriteString(",")
+			}
+
+			query.WriteString("\"")
+			query.WriteString(items[len(items)-1])
+			query.WriteString("\"")
+			query.WriteString("]")
+			q := r.url.Query()
+			q.Add(key, query.String())
+			r.url.RawQuery = q.Encode()
+		}
 	}
 }
 

@@ -4,9 +4,8 @@ import (
 	"binance-go-api/binance"
 	marketdata "binance-go-api/binance/market_data"
 	"context"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestTime(t *testing.T) {
@@ -26,5 +25,4 @@ func TestExchangeInfo(t *testing.T) {
 	})
 
 	assert.Nil(t, err, "binanceService.ExchangeInfo() returned error")
-	t.Fail()
 }
