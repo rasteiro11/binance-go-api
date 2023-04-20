@@ -59,9 +59,9 @@ func (c *httpclient) Do(ctx context.Context, req Request) (Response, error) {
 	}, nil
 }
 
-func newDefaultHttpClient() *http.Client  {
+func newDefaultHttpClient() *http.Client {
 	return &http.Client{
-		Timeout: time.Second * 420,
+		Timeout:   time.Second * 420,
 		Transport: http.DefaultClient.Transport,
 	}
 }
@@ -76,6 +76,6 @@ func NewClient(opts ...HttpClientOpts) HttpClient {
 	if c.client == nil {
 		c.client = newDefaultHttpClient()
 	}
-	
+
 	return c
 }
