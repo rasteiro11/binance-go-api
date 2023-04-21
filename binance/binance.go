@@ -47,6 +47,57 @@ func (s *service) ExchangeInfo(ctx context.Context, req *binance.ExchangeInfoReq
 	return res, nil
 }
 
+func (s *service) OrderBook(ctx context.Context, req *binance.OrderBookRequest) (*binance.OrderBookResponse, error) {
+	opts := []httpclient.RequestOption{}
+	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
+
+	if req.Limit != 0 {
+		limit := fmt.Sprintf("%d", req.Limit)
+		opts = append(opts, httpclient.WithQueryParam("limit", limit))
+	}
+
+	return call[binance.OrderBookResponse](ctx, http.MethodGet, "/depth", s, opts...)
+}
+
+func (s *service) RecentTrades(ctx context.Context, req *binance.RecentTradesRequest) ([]binance.Trade, error) {
+	opts := []httpclient.RequestOption{}
+	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
+
+	if req.Limit != 0 {
+		limit := fmt.Sprintf("%d", req.Limit)
+		opts = append(opts, httpclient.WithQueryParam("limit", limit))
+	}
+
+	res, err := call[[]binance.Trade](ctx, http.MethodGet, "/trades", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, err
+}
+
+func (s *service) OldTradesLookup(ctx context.Context, req *binance.OldTradesLookup) ([]binance.Trade, error) {
+	opts := []httpclient.RequestOption{}
+	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
+
+	if req.Limit != 0 {
+		limit := fmt.Sprintf("%d", req.Limit)
+		opts = append(opts, httpclient.WithQueryParam("limit", limit))
+	}
+
+	if req.FromId != 0 {
+		fromId := fmt.Sprintf("%d", req.FromId)
+		opts = append(opts, httpclient.WithQueryParam("fromId", fromId))
+	}
+
+	res, err := call[[]binance.Trade](ctx, http.MethodGet, "/historicalTrades", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, err
+}
+
 func call[T any](ctx context.Context, method, endpoint string, s *service, opts ...httpclient.RequestOption) (*T, error) {
 	var entity T
 
