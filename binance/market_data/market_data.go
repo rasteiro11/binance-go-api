@@ -51,7 +51,7 @@ type OrderBookResponse struct {
 }
 
 type RecentTradesRequest struct {
-	Symbol string `json:"symbol"`
+	Symbol string `json:"symbol" validate:"required"`
 	Limit  int    `json:"limit"`
 }
 

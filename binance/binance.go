@@ -3,6 +3,7 @@ package binance
 import (
 	binance "binance-go-api/binance/market_data"
 	"binance-go-api/httpclient"
+	"binance-go-api/validator"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -49,6 +50,11 @@ func (s *service) ExchangeInfo(ctx context.Context, req *binance.ExchangeInfoReq
 
 func (s *service) OrderBook(ctx context.Context, req *binance.OrderBookRequest) (*binance.OrderBookResponse, error) {
 	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
 	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
 
 	if req.Limit != 0 {
@@ -61,6 +67,11 @@ func (s *service) OrderBook(ctx context.Context, req *binance.OrderBookRequest) 
 
 func (s *service) RecentTrades(ctx context.Context, req *binance.RecentTradesRequest) ([]binance.Trade, error) {
 	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
 	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
 
 	if req.Limit != 0 {
@@ -78,6 +89,11 @@ func (s *service) RecentTrades(ctx context.Context, req *binance.RecentTradesReq
 
 func (s *service) OldTradesLookup(ctx context.Context, req *binance.OldTradesLookup) ([]binance.Trade, error) {
 	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
 	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol))
 
 	if req.Limit != 0 {
