@@ -33,9 +33,8 @@ func (s *service) ExchangeInfo(ctx context.Context, req *binance.ExchangeInfoReq
 		opts = append(opts, httpclient.WithQueryListParam("permissions", req.Permissions))
 	}
 
-	queryName := "symbol"
 	if len(req.Symbols) == 1 {
-		opts = append(opts, httpclient.WithQueryParam(queryName, req.Symbols[0]))
+		opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbols[0]))
 		return call[binance.ExchangeInfoResponse](ctx, http.MethodGet, "/exchangeInfo", s, opts...)
 	}
 
@@ -87,7 +86,7 @@ func (s *service) RecentTrades(ctx context.Context, req *binance.RecentTradesReq
 	return *res, err
 }
 
-func (s *service) OldTradesLookup(ctx context.Context, req *binance.OldTradesLookup) ([]binance.Trade, error) {
+func (s *service) OldTradesLookup(ctx context.Context, req *binance.OldTradesLookupRequest) ([]binance.Trade, error) {
 	opts := []httpclient.RequestOption{}
 
 	if err := validator.IsValid(req); err != nil {
@@ -114,6 +113,173 @@ func (s *service) OldTradesLookup(ctx context.Context, req *binance.OldTradesLoo
 	return *res, err
 }
 
+func (s *service) Klines(ctx context.Context, req *binance.KlinesRequest) ([]binance.Kline, error) {
+	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
+	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol), httpclient.WithQueryParam("interval", req.Interval))
+
+	if req.StartTime != 0 {
+		startTime := fmt.Sprintf("%d", req.StartTime)
+		opts = append(opts, httpclient.WithQueryParam("startTime", startTime))
+	}
+
+	if req.EndTime != 0 {
+		endTime := fmt.Sprintf("%d", req.EndTime)
+		opts = append(opts, httpclient.WithQueryParam("endTime", endTime))
+	}
+
+	if req.Limit != 0 {
+		limit := fmt.Sprintf("%d", req.Limit)
+		opts = append(opts, httpclient.WithQueryParam("limit", limit))
+	}
+
+	res, err := call[[]binance.Kline](ctx, http.MethodGet, "/klines", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, err
+}
+
+func (s *service) UIKlines(ctx context.Context, req *binance.KlinesRequest) ([]binance.Kline, error) {
+	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
+	opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbol), httpclient.WithQueryParam("interval", req.Interval))
+
+	if req.StartTime != 0 {
+		startTime := fmt.Sprintf("%d", req.StartTime)
+		opts = append(opts, httpclient.WithQueryParam("startTime", startTime))
+	}
+
+	if req.EndTime != 0 {
+		endTime := fmt.Sprintf("%d", req.EndTime)
+		opts = append(opts, httpclient.WithQueryParam("endTime", endTime))
+	}
+
+	if req.Limit != 0 {
+		limit := fmt.Sprintf("%d", req.Limit)
+		opts = append(opts, httpclient.WithQueryParam("limit", limit))
+	}
+
+	res, err := call[[]binance.Kline](ctx, http.MethodGet, "/uiKlines", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, err
+}
+
+func (s *service) AveragePrice(ctx context.Context, req *binance.AveragePriceRequest) (*binance.AveragePriceResponse, error) {
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+	return call[binance.AveragePriceResponse](ctx, http.MethodGet, "/avgPrice", s, httpclient.WithQueryParam("symbol", req.Symbol))
+}
+
+func (s *service) PriceChange24H(ctx context.Context, req *binance.PriceChangeRequest) ([]binance.PriceChangeResponse, error) {
+	opts := []httpclient.RequestOption{}
+
+	if req.Type != "" {
+		opts = append(opts, httpclient.WithQueryParam("type", req.Type))
+	}
+
+	if len(req.Symbols) == 1 {
+		opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbols[0]))
+		res, err := call[binance.PriceChangeResponse](ctx, http.MethodGet, "/ticker/24hr", s, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		return []binance.PriceChangeResponse{*res}, nil
+	}
+
+	opts = append(opts, httpclient.WithQueryListParam("symbols", req.Symbols))
+	res, err := call[[]binance.PriceChangeResponse](ctx, http.MethodGet, "/ticker/24hr", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, nil
+}
+
+func (s *service) SymbolPriceTicker(ctx context.Context, req *binance.SymbolPriceTickerRequest) ([]binance.SymbolPriceTicker, error) {
+	if len(req.Symbols) == 1 {
+		res, err := call[binance.SymbolPriceTicker](ctx, http.MethodGet, "/ticker/price", s, httpclient.WithQueryParam("symbol", req.Symbols[0]))
+		if err != nil {
+			return nil, err
+		}
+
+		return []binance.SymbolPriceTicker{*res}, nil
+	}
+
+	res, err := call[[]binance.SymbolPriceTicker](ctx, http.MethodGet, "/ticker/price", s, httpclient.WithQueryListParam("symbols", req.Symbols))
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, nil
+}
+
+func (s *service) SymbolOrderBookTicker(ctx context.Context, req *binance.SymbolOrderBookTickerRequest) ([]binance.SymbolOrderBookTicker, error) {
+	if len(req.Symbols) == 1 {
+		res, err := call[binance.SymbolOrderBookTicker](ctx, http.MethodGet, "/ticker/bookTicker", s, httpclient.WithQueryParam("symbol", req.Symbols[0]))
+		if err != nil {
+			return nil, err
+		}
+
+		return []binance.SymbolOrderBookTicker{*res}, nil
+	}
+
+	res, err := call[[]binance.SymbolOrderBookTicker](ctx, http.MethodGet, "/ticker/bookTicker", s, httpclient.WithQueryListParam("symbols", req.Symbols))
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, nil
+}
+
+func (s *service) RollingWindowPriceChange(ctx context.Context, req *binance.RollingWindowPriceChangeRequest) ([]binance.RollingWindowPriceChange, error) {
+	opts := []httpclient.RequestOption{}
+
+	if err := validator.IsValid(req); err != nil {
+		return nil, err
+	}
+
+	if req.Type != "" {
+		opts = append(opts, httpclient.WithQueryParam("type", req.Type))
+	}
+
+	if req.WindowSize != "" {
+		opts = append(opts, httpclient.WithQueryParam("windowSize", req.WindowSize))
+	}
+
+	if len(req.Symbols) == 1 {
+		opts = append(opts, httpclient.WithQueryParam("symbol", req.Symbols[0]))
+		res, err := call[binance.RollingWindowPriceChange](ctx, http.MethodGet, "/ticker", s, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		return []binance.RollingWindowPriceChange{*res}, nil
+	}
+
+	opts = append(opts, httpclient.WithQueryListParam("symbols", req.Symbols))
+	res, err := call[[]binance.RollingWindowPriceChange](ctx, http.MethodGet, "/ticker", s, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return *res, nil
+}
+
 func call[T any](ctx context.Context, method, endpoint string, s *service, opts ...httpclient.RequestOption) (*T, error) {
 	var entity T
 
@@ -126,7 +292,7 @@ func call[T any](ctx context.Context, method, endpoint string, s *service, opts 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Body: ", string(res.Body()))
+
 	if res.Body() != nil {
 		err = json.Unmarshal(res.Body(), &entity)
 		if err != nil {
